@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>AI Hiring Portal - Offline All In One</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6fb;
+      color: #1f2937;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .app { max-width: 1100px; margin: 0 auto; }
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: #fff;
+      padding: 20px;
+    }
+    .header h1 { font-size: 26px; margin-bottom: 6px; }
+    .header p { opacity: 0.95; }
+
+    .content { padding: 18px; }
+
+    .grid { display: grid; gap: 14px; }
+    .grid.two { grid-template-columns: 1fr 1fr; }
+
+    .panel {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    h2 { font-size: 20px; margin-bottom: 8px; }
+    h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .4px; color: #4b5563; margin-bottom: 10px; }
+    p { line-height: 1.5; }
+
+    label { display: block; font-size: 13px; color: #374151; margin: 10px 0 6px; font-weight: 600; }
+    input[type="text"], input[type="number"], textarea, input[type="file"] {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      background: #fff;
+    }
+    textarea { min-height: 140px; resize: vertical; }
+
+    .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      background: #2563eb;
+    }
+    button.secondary { background: #6b7280; }
+    button.green { background: #059669; }
+
+    .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+    .tile {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px;
+      background: #fafafa;
+    }
+
+    .score-box {
+      margin-top: 8px;
+      border-radius: 12px;
+      padding: 14px;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      text-align: center;
+    }
+    .score-num { font-size: 44px; font-weight: 800; color: #3730a3; }
+
+    .list { margin-top: 10px; padding-left: 18px; }
+    .list li { margin-bottom: 6px; }
+
+    .table-wrap {
+      margin-top: 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      overflow: auto;
+      max-height: 360px;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #e5e7eb; padding: 9px; text-align: left; }
+    th { background: #f3f4f6; position: sticky; top: 0; z-index: 1; }
+
+    .hidden { display: none; }
+    .small { font-size: 12px; color: #6b7280; margin-top: 8px; }
+
+    @media (max-width: 900px) {
+      .grid.two, .tiles { grid-template-columns: 1fr; }
+      .header h1 { font-size: 22px; }
+      .score-num { font-size: 34px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="header">
+        <h1>AI Hiring Portal (Offline)</h1>
+        <p>Single-file mode. No server needed. Works directly as a local file.</p>
+      </div>
+
+      <div class="content" id="portalView">
+        <h2>Configuration</h2>
+        <div class="panel" style="margin-bottom: 20px;">
+          <label>API Key (OpenAI or Perplexity)</label>
+          <input type="password" id="apiKey" placeholder="sk-..." />
+          <label>Provider</label>
+          <select id="apiProvider" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #d1d5db;">
+            <option value="openai">OpenAI (GPT-4o-mini)</option>
+            <option value="perplexity">Perplexity (Sonar Pro)</option>
+            <option value="gemini">Google Gemini (1.5 Flash)</option>
+          </select>
+          <p class="small">Keys are stored locally in your browser and never sent to our servers.</p>
+        </div>
+
+        <h2>Select Role</h2>
+        <p>Everything from the three app flows is merged in this one file.</p>
+        <div class="tiles">
+          <div class="tile">
+            <h3>Employer (Bulk Scan)</h3>
+            <p>Upload many TXT resumes, score them against a job description, and export CSV.</p>
+            <div class="btn-row"><button class="green" id="goEmployer">Open Employer Desk</button></div>
+          </div>
+          <div class="tile">
+            <h3>Job Seeker (Single Scan)</h3>
+            <p>Upload one TXT resume and get ATS-style feedback instantly.</p>
+            <div class="btn-row"><button id="goJobSeeker">Open Job Seeker Desk</button></div>
+          </div>
+        </div>
+        <p class="small">Tip: For offline parsing, use .txt resume files. PDF/DOCX need external libraries/server support.</p>
+      </div>
+
+      <div class="content hidden" id="jobSeekerView">
+        <div class="btn-row"><button class="secondary" id="backFromJob">← Back</button></div>
+        <h2>Job Seeker Desk</h2>
+        <div class="grid two">
+          <div class="panel">
+            <h3>Input</h3>
+            <label>Resume file (TXT recommended)</label>
+            <input type="file" id="singleResume" accept=".txt,.pdf,.doc,.docx" />
+            <label>Job Description</label>
+            <textarea id="singleJd" placeholder="Paste job description..."></textarea>
+            <div class="btn-row"><button id="singleAnalyze">Analyze Resume</button></div>
+            <p class="small" id="singleInfo"></p>
+          </div>
+          <div class="panel">
+            <h3>Output</h3>
+            <div class="score-box">
+              <div class="score-num" id="singleScore">0</div>
+              <div>Match Score / 100</div>
+            </div>
+            <ul class="list" id="singleBullets">
+              <li>Run analysis to see strengths and improvements.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="content hidden" id="employerView">
+        <div class="btn-row"><button class="secondary" id="backFromEmployer">← Back</button></div>
+        <h2>Employer Desk</h2>
+        <div class="grid two">
+          <div class="panel">
+            <h3>Batch Input</h3>
+            <label>Resume files (TXT recommended, multiple allowed)</label>
+            <input type="file" id="bulkResumes" accept=".txt,.pdf,.doc,.docx" multiple />
+            <label>Job Description</label>
+            <textarea id="bulkJd" placeholder="Paste job description..."></textarea>
+            <div class="btn-row">
+              <button class="green" id="bulkAnalyze">Run Bulk Analysis</button>
+              <button class="secondary" id="bulkExport">Export CSV</button>
+            </div>
+            <p class="small" id="bulkInfo"></p>
+          </div>
+          <div class="panel">
+            <h3>Summary</h3>
+            <p><strong>Total Uploaded:</strong> <span id="sumTotal">0</span></p>
+            <p><strong>Processed:</strong> <span id="sumProcessed">0</span></p>
+            <p><strong>Average Score:</strong> <span id="sumAvg">0</span></p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>Rank</th><th>File</th><th>Score</th><th>Status</th></tr>
+                </thead>
+                <tbody id="bulkRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="scanner.js"></script>
+  <script>
+    // Initialize PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    const views = {
+      portal: document.getElementById('portalView'),
+      job: document.getElementById('jobSeekerView'),
+      employer: document.getElementById('employerView')
+    };
+
+    const state = { 
+      bulkResults: [],
+      apiKey: localStorage.getItem('resume_scanner_api_key') || '',
+      apiProvider: localStorage.getItem('resume_scanner_provider') || 'openai'
+    };
+
+    // Load saved settings
+    if (state.apiKey) document.getElementById('apiKey').value = state.apiKey;
+    document.getElementById('apiProvider').value = state.apiProvider;
+
+    function showView(name) {
+      Object.values(views).forEach(v => v.classList.add('hidden'));
+      views[name].classList.remove('hidden');
+    }
+
+    document.getElementById('apiKey').addEventListener('change', (e) => {
+      state.apiKey = e.target.value;
+      localStorage.setItem('resume_scanner_api_key', e.target.value);
+    });
+
+    document.getElementById('apiProvider').addEventListener('change', (e) => {
+      state.apiProvider = e.target.value;
+      localStorage.setItem('resume_scanner_provider', e.target.value);
+    });
+
+    document.getElementById('goEmployer').addEventListener('click', () => showView('employer'));
+    document.getElementById('goJobSeeker').addEventListener('click', () => showView('job'));
+    document.getElementById('backFromJob').addEventListener('click', () => showView('portal'));
+    document.getElementById('backFromEmployer').addEventListener('click', () => showView('portal'));
+
+    function tokenize(text) {
+      return (text || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter(w => w.length > 2);
+    }
+
+    function unique(arr) { return [...new Set(arr)]; }
+
+    async function readResumeText(file) {
+      const name = (file.name || '').toLowerCase();
+      if (name.endsWith('.txt')) {
+        return { text: await file.text(), warning: '' };
+      } else if (name.endsWith('.pdf')) {
+        try {
+          const text = await extractPdfText(file);
+          return { text, warning: '' };
+        } catch (e) {
+          return { text: '', warning: `PDF Error: ${e.message}` };
+        }
+      }
+      return { text: '', warning: `Unsupported file type: ${name}. Use .txt or .pdf.` };
+    }
+
+    document.getElementById('singleAnalyze').addEventListener('click', async () => {
+      const file = document.getElementById('singleResume').files[0];
+      const jd = document.getElementById('singleJd').value.trim();
+      const info = document.getElementById('singleInfo');
+      const bullets = document.getElementById('singleBullets');
+      const scoreEl = document.getElementById('singleScore');
+
+      if (!state.apiKey) {
+        alert('Please enter an API key on the home screen.');
+        return;
+      }
+
+      if (!file || !jd) {
+        info.textContent = 'Please choose a resume file and add job description.';
+        return;
+      }
+
+      info.textContent = 'Extracting text...';
+      const { text, warning } = await readResumeText(file);
+      if (!text) {
+        info.textContent = warning || 'Could not extract text.';
+        return;
+      }
+
+      info.textContent = 'AI is analyzing... (this may take 30s)';
+      try {
+        const analysis = await callAiScan(text, jd, state.apiKey, state.apiProvider);
+        
+        // Parse score from AI response (look for "Match score: XX" or similar)
+        const scoreMatch = analysis.match(/Match score:?\s*(\d+)/i) || analysis.match(/(\d+)\/100/i);
+        const score = scoreMatch ? scoreMatch[1] : '??';
+        
+        scoreEl.textContent = score;
+        bullets.innerHTML = `<div style="white-space: pre-wrap; text-align: left; padding: 10px;">${analysis}</div>`;
+        info.textContent = 'Analysis complete.';
+      } catch (err) {
+        info.textContent = `Error: ${err.message}`;
+      }
+    });
+
+    document.getElementById('bulkAnalyze').addEventListener('click', async () => {
+      const files = Array.from(document.getElementById('bulkResumes').files || []);
+      const jd = document.getElementById('bulkJd').value.trim();
+      const info = document.getElementById('bulkInfo');
+      const tbody = document.getElementById('bulkRows');
+
+      if (!state.apiKey) {
+        alert('Please enter an API key on the home screen.');
+        return;
+      }
+
+      if (!files.length || !jd) {
+        info.textContent = 'Please select resume files and add job description.';
+        return;
+      }
+
+      const output = [];
+      tbody.innerHTML = '';
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        info.textContent = `Processing ${i+1}/${files.length}: ${file.name}...`;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${i + 1}</td><td>${file.name}</td><td id="score-${i}">...</td><td id="status-${i}">Pending</td>`;
+        tbody.appendChild(tr);
+
+        try {
+          const { text } = await readResumeText(file);
+          if (!text) throw new Error("Could not extract text");
+
+          const analysis = await callAiScan(text, jd, state.apiKey, state.apiProvider);
+          const scoreMatch = analysis.match(/Match score:?\s*(\d+)/i) || analysis.match(/(\d+)\/100/i);
+          const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+
+          document.getElementById(`score-${i}`).textContent = score;
+          document.getElementById(`status-${i}`).textContent = 'Done';
+          output.push({ file_name: file.name, match_score: score, status: 'processed' });
+        } catch (err) {
+          document.getElementById(`score-${i}`).textContent = '0';
+          document.getElementById(`status-${i}`).textContent = 'Error';
+          output.push({ file_name: file.name, match_score: 0, status: 'error' });
+        }
+      }
+
+      state.bulkResults = output;
+      const processed = output.filter(r => r.status === 'processed').length;
+      const scoreSum = output.reduce((sum, r) => sum + (r.match_score || 0), 0);
+      const avg = output.length ? Math.round(scoreSum / output.length) : 0;
+
+      document.getElementById('sumTotal').textContent = String(output.length);
+      document.getElementById('sumProcessed').textContent = String(processed);
+      document.getElementById('sumAvg').textContent = String(avg);
+      info.textContent = 'Bulk processing complete.';
+    });
+
+    document.getElementById('bulkExport').addEventListener('click', () => {
+      if (!state.bulkResults.length) {
+        document.getElementById('bulkInfo').textContent = 'Run bulk analysis first.';
+        return;
+      }
+
+      const header = ['Rank','File Name','Match Score','Status'];
+      const rows = state.bulkResults.map((r, i) => [i + 1, r.file_name, r.match_score, r.status]);
+      const csv = [header, ...rows]
+        .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bulk_resume_analysis_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
